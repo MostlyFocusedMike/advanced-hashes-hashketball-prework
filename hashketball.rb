@@ -1,7 +1,8 @@
 # Write your code here!
 require 'pry'
 require 'benchmark'
-def game_hash()
+def game_hash() 
+# game_hash{home{teamname"",colors[],players{stats: ints}}
   return {
     home: {
       team_name: "Brooklyn Nets",
@@ -122,94 +123,57 @@ end
 # helper methods 
 
 def players 
+  # hash of {player_name: stats{}}
   home = game_hash[:home][:players]
   away = game_hash[:away][:players]
   return home.merge(away)
 end
 
 def find_player(player) 
-  players.find do |name,stats|
-    name == player
-  end[1] #just the player hash, not their name key
+  # given their name, it returns their stats hash
+  players.find { |name,stats| name == player }[1]
 end
 
 def find_team(team)
-  game_hash.find do |location,details|
-    game_hash[location][:team_name] == team
-  end
+  # given their name, it returns the team's assets hash
+  game_hash.find { |locale,assets| game_hash[locale][:team_name] == team }[1]
 end
 
-
-# original code
-
-
-
-
 def num_points_scored(player)
-  return players(player)[:points]
-  # if game_hash[:home][:players].keys.include?(player)
-  #   return game_hash[:home][:players][player][:points]
-  # else 
-  #   return game_hash[:away][:players][player][:points]
-  # end
+  # given player's total points scored 
+  return players[player][:points]
 end
 
 def shoe_size(player)
-  game_hash.each do |location,stats|
-    if game_hash[location][:players].keys.include?(player)
-      return game_hash[location][:players][player][:shoe]
-    end
-  end
+  # given player's total shoe size 
+  return players[player][:shoe]
 end
 
 def team_colors(team)
-  if game_hash[:home][:team_name] == team
-    return game_hash[:home][:colors]
-  else 
-    return game_hash[:away][:colors]
-  end
+  #return array of given teams colors 
+  return find_team(team)[:colors]
 end
 
 def team_names()
-  game_hash.map {|type,attributes| game_hash[type][:team_name]}
+  # returns an array of the team names 
+  return game_hash.map {|locale,assets| game_hash[locale][:team_name]}
 end
 
 def player_numbers(team)
-  game_hash.map do |location,value|
-    if game_hash[location][:team_name] == team
-      game_hash[location][:players].map do |player,stats|
-        game_hash[location][:players][player][:number]
-      end
-    end
-  end.flatten.compact
+  # returns all player numbers of a given team name
+  find_team(team)[:players].map {|name,stats| stats[:number]}
 end  
 
 def player_stats(player)
-  game_hash.each do |location,value|
-    if game_hash[location][:players].include?(player) 
-      return game_hash[location][:players][player]
-    end
-  end
+  #return stats hash of a given player 
+  return players[player]
 end
 
 def big_shoe_rebounds()
-  shoe = 0
-  player = ""
-  game_hash.each do |location,value|
-     game_hash[location][:players].each do |name,stats|
-      if game_hash[location][:players][name][:shoe] > shoe
-        shoe = game_hash[location][:players][name][:shoe]
-        player = name
-      end
-    end
-  end
-  
-  if game_hash[:home][:players].keys.include?(player)
-    return game_hash[:home][:players][player][:rebounds]
-  else 
-    return game_hash[:away][:players][player][:rebounds]
-  end
+  # return the rebounds of the player with the biggest shoe
+  players.sort_by { |player,stats| stats[:shoe] }[-1][1][:rebounds]
 end
+
 
 # bonus methods that were attempted after I realized the right
 # way to go about this lab with helper methods 
@@ -217,31 +181,113 @@ end
 
 
 def most_points_scored()
+  # returns the name of the player with the highest score
   players.sort_by {|name,stats|stats[:points]}[-1][0] 
 end 
 
 def winning_team
-  home_p = away_p = 0
-  game_hash.each do |location,stuff|
-    game_hash[location][:players].each do |player,stat|
-      location == :home ? home_p += stat[:points] : away_p += stat[:points]
-    end
-  end
-  return game_hash[home_p > away_p ? :home : :away][:team_name]
-end
-
-def player_with_longest_name
-  players.sort_by do |name,stats|
-    name.length
+  # returns the name of the team that scored the most points 
+  game_hash.sort_by do |locale,assets|
+    assets[:players].map {|k,stats| stats[:points] }.reduce(0, :+)
   end[-1][0]
 end
 
+def player_with_longest_name
+  # returns the longest name of all players
+  players.sort_by { |name,v| name.length }[-1][0]
+end
+
 def long_name_steals_a_ton?
-  long_guy = player_with_longest_name
-  players.any? do |name,stats|
-    players[long_guy][:steals] < stats[:steals]
+  # true if the longest named player also stole the most, false if not
+  players.none? do |name,stats| 
+    find_player(player_with_longest_name)[:steals] < stats[:steals]
   end
-end  
+end 
+
+
+
+
+def player_by_number(num) 
+  # enter number return players name 
+  return "That's not a number" unless num.class == Fixnum
+  player = players.find { |name,stats| stats[:number] == num }
+  return player ? player[0] : "No player has that number"
+end
+
 binding.pry
-# 10.times {puts Benchmark.measure { winning_team }}
-winning_team
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# OLD METHODS BEFORE HELPERS 
+# def shoe_size(player)
+#   game_hash.each do |location,stats|
+#     if game_hash[location][:players].keys.include?(player)
+#       return game_hash[location][:players][player][:shoe]
+#     end
+#   end
+# end
+
+
+# def num_points_scored(player)
+#   if game_hash[:home][:players].keys.include?(player)
+#     return game_hash[:home][:players][player][:points]
+#   else 
+#     return game_hash[:away][:players][player][:points]
+#   end
+# end
+
+# def shoe_size(player)
+#   game_hash.each do |location,stats|
+#     if game_hash[location][:players].keys.include?(player)
+#       return game_hash[location][:players][player][:shoe]
+#     end
+#   end
+# end
+
+
+# def player_stats(player)
+#   #return stats hash of a given player 
+#   return players[player]
+#   game_hash.each do |location,value|
+#     if game_hash[location][:players].include?(player) 
+#       return game_hash[location][:players][player]
+#     end
+#   end
+# end
+
+# def big_shoe_rebounds()
+#   shoe = 0
+#   player = ""
+#   game_hash.each do |location,value|
+#     game_hash[location][:players].each do |name,stats|
+#       if game_hash[location][:players][name][:shoe] > shoe
+#         shoe = game_hash[location][:players][name][:shoe]
+#         player = name
+#       end
+#     end
+#   end
+  
+#   if game_hash[:home][:players].keys.include?(player)
+#     return game_hash[:home][:players][player][:rebounds]
+#   else 
+#     return game_hash[:away][:players][player][:rebounds]
+#   end
+# end
